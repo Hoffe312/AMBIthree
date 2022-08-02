@@ -59,12 +59,26 @@ def viterbi(seq, matrix, hidden_emission):
             index_from = labels.index(seq[i]) + 4
         index_to = labels.index(seq[i + 1])
         cell_one = matrix[index_from][index_to]
-        cell_two = matrix[index_from][index_to + 4]
-        if cell_one < cell_two:
-            viterbi_chance_arr.append(cell_two)
+        if hidden_emission == "+":
+            cell_two = matrix[index_from + 4][index_to]
+            cell_four = matrix[index_from + 4][index_to + 4]
+        else:
+            cell_two = matrix[index_from - 4][index_to]
+            cell_four = matrix[index_from - 4][index_to + 4]
+        cell_three = matrix[index_from][index_to + 4]
+        if cell_one < cell_three and cell_two < cell_three and cell_four < cell_three:
+            viterbi_chance_arr.append(cell_three)
             viterbi_status_arr += "-"
             hidden_emission = "-"
-        else:
+        elif cell_one < cell_four and cell_two < cell_four and cell_three < cell_four:
+            viterbi_chance_arr.append(cell_four)
+            viterbi_status_arr += "-"
+            hidden_emission = "-"
+        elif cell_one < cell_two and cell_three < cell_two and cell_four < cell_two:
+            viterbi_chance_arr.append(cell_two)
+            viterbi_status_arr += "+"
+            hidden_emission = "+"
+        elif cell_two < cell_one and cell_three < cell_one and cell_four < cell_one:
             viterbi_chance_arr.append(cell_one)
             viterbi_status_arr += "+"
             hidden_emission = "+"
@@ -75,8 +89,8 @@ def viterbi(seq, matrix, hidden_emission):
     for i in range(len(viterbi_status_arr)):
         # print(viterbi_status_arr[i], end="")
         viterbi_str += viterbi_status_arr[i]
-    print("viterbi:\n", viterbi_str)
-    viterbi_false(hidden_emission, viterbi_str)
+    print(f"viterbi:\n {viterbi_str}")
+    return viterbi_str
 
 
 def hamming_distance(obj1, obj2):
@@ -128,7 +142,8 @@ def main():  # A+     C       G      T      A-      C      G      T
               [0.025, 0.025, 0.025, 0.025, 0.159, 0.215, 0.263, 0.263]]
 
     seq, hidden_emission = create_hmm(1000, matrix)
-    viterbi(seq, matrix, hidden_emission[0])
+    viterbi_str = viterbi(seq, matrix, hidden_emission[0])
+    viterbi_false(hidden_emission, viterbi_str)
 
 
 if __name__ == '__main__':
