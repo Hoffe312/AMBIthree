@@ -44,53 +44,52 @@ def create_hmm(hmm_size, matrix):
     return seq, hidden_emission
 
 
-def viterbi(seq, matrix, hidden_emission):
+def viterbi(seq, matrix):
     labels = ["A", "C", "G", "T"]
-    viterbi_chance_arr = []
-    viterbi_status_arr = hidden_emission
-    viterbi_str = ""
+
     change_matrix = input("matrix change?(if no : enter, else: dont leave it blank):\n")
     if change_matrix:
         matrix = matrix_change(matrix)
+
+    current_plus = 0.5 * 0.25
+    current_minus = 0.5 * 0.25
+
+    plus_path = "+"
+    minus_path = "-"
+
     for i in range(len(seq) - 1):
-        if hidden_emission == "+":
-            index_from = labels.index(seq[i])
-        else:
-            index_from = labels.index(seq[i]) + 4
+        index_from = labels.index(seq[i])
         index_to = labels.index(seq[i + 1])
+
         cell_one = matrix[index_from][index_to]
-        if hidden_emission == "+":
-            cell_two = matrix[index_from + 4][index_to]
-            cell_four = matrix[index_from + 4][index_to + 4]
+        cell_two = matrix[index_from][index_to + 4]
+        cell_three = matrix[index_from + 4][index_to]
+        cell_four = matrix[index_from + 4][index_to + 4]
+
+        if current_plus * cell_one > current_minus * cell_three:
+            new_p_plus = 5 * current_plus * cell_one
+            plus_path += "+"
+
         else:
-            cell_two = matrix[index_from - 4][index_to]
-            cell_four = matrix[index_from - 4][index_to + 4]
-        cell_three = matrix[index_from][index_to + 4]
-        if cell_one < cell_three and cell_two < cell_three and cell_four < cell_three:
-            viterbi_chance_arr.append(cell_three)
-            viterbi_status_arr += "-"
-            hidden_emission = "-"
-        elif cell_one < cell_four and cell_two < cell_four and cell_three < cell_four:
-            viterbi_chance_arr.append(cell_four)
-            viterbi_status_arr += "-"
-            hidden_emission = "-"
-        elif cell_one < cell_two and cell_three < cell_two and cell_four < cell_two:
-            viterbi_chance_arr.append(cell_two)
-            viterbi_status_arr += "+"
-            hidden_emission = "+"
-        elif cell_two < cell_one and cell_three < cell_one and cell_four < cell_one:
-            viterbi_chance_arr.append(cell_one)
-            viterbi_status_arr += "+"
-            hidden_emission = "+"
-    #  viterbi_num = viterbi_chance_arr[0]
-    #  for i in range(0, len(viterbi_chance_arr)):
-    #      print(f"{i + 1}. {viterbi_num}")
-    #       viterbi_num = viterbi_num * viterbi_chance_arr[i]
-    for i in range(len(viterbi_status_arr)):
-        # print(viterbi_status_arr[i], end="")
-        viterbi_str += viterbi_status_arr[i]
-    print(f"viterbi:\n {viterbi_str}")
-    return viterbi_str
+            new_p_plus = 5 * current_minus * cell_three
+            plus_path += "-"
+
+        if current_plus * cell_two > current_minus * cell_four:
+            new_p_minus = 5 * current_plus * cell_two
+            minus_path += "+"
+        else:
+            new_p_minus = 5 * current_minus * cell_four
+            minus_path += "-"
+
+        current_plus = new_p_plus
+        current_minus = new_p_minus
+
+    if current_plus > current_minus:
+        print(f"viterbi states: {plus_path}")
+        return plus_path
+    else:
+        print(f"viterbi states: {minus_path}")
+        return minus_path
 
 
 def hamming_distance(obj1, obj2):
@@ -142,8 +141,11 @@ def main():  # A+     C       G      T      A-      C      G      T
               [0.025, 0.025, 0.025, 0.025, 0.159, 0.215, 0.263, 0.263]]
 
     seq, hidden_emission = create_hmm(1000, matrix)
-    viterbi_str = viterbi(seq, matrix, hidden_emission[0])
+    viterbi_str = viterbi(seq, matrix)
     viterbi_false(hidden_emission, viterbi_str)
+
+    #test_seq = "ATCTTGCTCAACAAATACATTTCGCTTTGTTTTGGGCATGCGGCTTTAGGTTCTACGCTCAAAGATGAGAAGTCAGGTAACAGAAGGACGAGTCTTCAACTAGGCGGCCCTGTGCGTGCGACCTGGGCATCCGAGGACCCGGAGCCGTGCCTTACCATCCTGTGCCTGAGCCATAAGTTCTAGGGATGTGATCCCTACCCAAGGATCCAGCCGGCATGGCGGCAGTGAAAATAAGTCCTGGCTCATTTGTTCGGAAACTCAGACAAATCATGCACAGTACTCCCTTAATGGCAGGGAGAGGGAGACCTCCTCAGCAACTGTCTTCGGTTACCCGGGTCCATTTGGCACAAACTCCATAGCCTGGGGATAGGACTCTCCTGTGTAACCCAGTTGCAGTTCAGCTGAACAGAAGGAGGGCACACCCACTTGCAAGTTTTGGGGGGAGAAAAAAGACTACCTATTCGCTGTCATGATCTTCACGCAGAGCTGATGAGTCTCGGGACGAATGCCATGCGACGTTCGGGAGTTCCTCGCTAGGAGCTCAGGCAAACTGATCCTTAAAAAACGGATTCATAGTGTGGCAGGACCCGGCCTATGTTTCCAATTGGATCTCCGATTTTTGATGGTATGCGCCATCCCTTTCGGACCCCACTCTCTTGCTGGGAAGTATACACACGCACAGGATTGGCGTGGCTCCACTTGCAAAAGCTCCATAAGTGCAAGTTGATAATCATCCAAACCTTCTGCTTTTCCATGACACATCCAGGGGTGCCCAGGGACATTATTGGTTTTGCAGGACTCCTGGTCACCAAGTAAGTTGATTAAATTGTGGAGAACAAGTTTAAGGCCCACGCCCGGGGAGAACACTGGTTCAGTCGAGTCGGTGGGGTCCCTCGGCTCCGAACGGAGAGCCTGTGAGCAGGATTAGACTTAAGACTCACCAGGGTTTAGTCGGTGACCCCTTTATATTTAAGAAAGGAGACTGAGACATGAGAAGTGC"
+    #viterbi(test_seq, matrix)
 
 
 if __name__ == '__main__':
